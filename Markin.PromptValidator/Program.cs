@@ -1,5 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
+﻿using Markin.PromptValidator;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
@@ -22,15 +22,7 @@ var kernel = Kernel.CreateBuilder()
     .AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey)
     .Build();
 
-var logicAgent = new ChatCompletionAgent()
-{
-    Name = "Logic Agent",
-    Description = "Агент проверяющий общую логику промпта",
-    Kernel = kernel,
-    Instructions = """
-        Проверь промпт на наличие противоречий, опиши в тезисном формате со ссылками на изначальный текст
-        """,
-};
+var logicAgent = LogicAgent.Create(kernel);
 
 var startMessage = new ChatMessageContent(AuthorRole.User, prompt);
 
