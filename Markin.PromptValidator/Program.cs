@@ -1,6 +1,7 @@
 ﻿using Markin.PromptValidator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.DependencyInjection;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
 
@@ -14,7 +15,10 @@ var solutionDir = Directory.GetParent(Environment.CurrentDirectory)!.Parent!.Par
 var promptsFolder = Path.Combine(solutionDir, "testprompts");
 var pathToPrompt = Path.Combine(promptsFolder, "Name Translator.txt");
 
-Console.WriteLine($"Читаем промпт из файла: {pathToPrompt}");
+var kernelBuilder = Kernel.CreateBuilder();
+kernelBuilder.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
+kernelBuilder.Services.AddLogging();
+var kernel = kernelBuilder.Build();
 
 var prompt = File.ReadAllText(pathToPrompt);
 

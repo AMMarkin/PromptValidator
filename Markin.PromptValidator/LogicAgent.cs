@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 
@@ -72,5 +73,6 @@ internal class LogicAgent
         Description = "Агент проверяющий общую логику промпта",
         Kernel = kernel,
         Instructions = prompt,
+        LoggerFactory = kernel.GetRequiredService<ILoggerFactory>()
     };
 }
