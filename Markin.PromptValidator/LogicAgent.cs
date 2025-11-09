@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Markin.PromptValidator;
 
@@ -73,6 +74,10 @@ internal class LogicAgent
         Description = "Агент проверяющий общую логику промпта",
         Kernel = kernel,
         Instructions = prompt,
+        Arguments = new(new OpenAIPromptExecutionSettings
+        {
+            ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("none")
+        }),
         LoggerFactory = kernel.GetRequiredService<ILoggerFactory>()
     };
 }
