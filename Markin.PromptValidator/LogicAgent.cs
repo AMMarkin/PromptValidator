@@ -1,13 +1,12 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Markin.PromptValidator;
 
-internal class LogicAgent
+internal class LogicAgent(Kernel kernel)
 {
-    private static readonly string prompt = """
+    private static readonly string systemPrompt = """
         Ты - эксперт по анализу качества промптов для AI-систем. Твоя задача - находить расплывчатые, неконкретные формулировки в промптах пользователей.
 
         # МЕТОДОЛОГИЯ АНАЛИЗА:
@@ -68,16 +67,25 @@ internal class LogicAgent
         4. Сналача анализ, потом вывод
         """;
 
-    public static ChatCompletionAgent Create(Kernel kernel) => new()
+    private static readonly OpenAIPromptExecutionSettings executionSettings = new()
     {
-        Name = "LogicAgent",
-        Description = "Агент проверяющий общую логику промпта",
-        Kernel = kernel,
-        Instructions = prompt,
-        Arguments = new(new OpenAIPromptExecutionSettings
-        {
-            ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("none")
-        }),
-        LoggerFactory = kernel.GetRequiredService<ILoggerFactory>()
+        ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("none")
     };
+
+    public async Task<string> AnalyzePrompt(string promptText)
+    {
+        var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
+
+        var chatHistory = new ChatHistory();
+        chatHistory.AddSystemMessage(systemPrompt);
+        chatHistory.AddUserMessage($"""
+        Промпт для анализа:
+        ```
+        {promptText}
+        ```
+        """);
+
+        var result = await chatCompletion.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
+        return result.Content?.ToString() ?? "null";
+    }
 }

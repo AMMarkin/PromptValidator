@@ -1,6 +1,5 @@
 ﻿using Markin.PromptValidator;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.Extensions.DependencyInjection;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
@@ -20,15 +19,9 @@ kernelBuilder.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
 kernelBuilder.Services.AddLogging();
 var kernel = kernelBuilder.Build();
 
-var prompt = File.ReadAllText(pathToPrompt);
-
-var logicAgent = LogicAgent.Create(kernel);
-
-var startMessage = new ChatMessageContent(AuthorRole.User, prompt);
+var logicAgent = new LogicAgent(kernel);
 
 Console.WriteLine("Результат анализа:");
 
-await foreach (var response in logicAgent.InvokeAsync(startMessage))
-{
-    Console.WriteLine(response.Message);
-}
+var response = await logicAgent.AnalyzePrompt(File.ReadAllText(pathToPrompt));
+Console.WriteLine(response);
