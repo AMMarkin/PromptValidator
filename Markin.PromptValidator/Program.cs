@@ -22,10 +22,6 @@ var kernel = kernelBuilder.Build();
 
 var prompt = File.ReadAllText(pathToPrompt);
 
-var kernel = Kernel.CreateBuilder()
-    .AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey)
-    .Build();
-
 var logicAgent = LogicAgent.Create(kernel);
 
 var startMessage = new ChatMessageContent(AuthorRole.User, prompt);
