@@ -1,6 +1,7 @@
 ﻿using Markin.PromptValidator;
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
 
@@ -14,14 +15,36 @@ var solutionDir = Directory.GetParent(Environment.CurrentDirectory)!.Parent!.Par
 var promptsFolder = Path.Combine(solutionDir, "testprompts");
 var pathToPrompt = Path.Combine(promptsFolder, "Name Translator.txt");
 
+var userRequest = "Проанализируй промпт, найди все ошибки";
+
 var kernelBuilder = Kernel.CreateBuilder();
 kernelBuilder.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
 kernelBuilder.Services.AddLogging();
+
+kernelBuilder.Services.AddSingleton<LogicAgent>();
+kernelBuilder.Services.AddSingleton<DialogAgent>();
+
 var kernel = kernelBuilder.Build();
 
-var logicAgent = new LogicAgent(kernel);
+var dialogAgent = kernel.GetRequiredService<DialogAgent>();
 
-Console.WriteLine("Результат анализа:");
+var sessionMessages = new ChatHistory();
+sessionMessages.AddUserMessage(userRequest);
 
-var response = await logicAgent.AnalyzePrompt(File.ReadAllText(pathToPrompt));
-Console.WriteLine(response);
+while (true)
+{
+    var response = await dialogAgent.ProcessRequest(sessionMessages);
+    sessionMessages.AddAssistantMessage(response);
+
+    Console.WriteLine(response);
+
+    Console.Write("> ");
+    userRequest = Console.ReadLine();
+
+    if (string.IsNullOrEmpty(userRequest))
+        continue;
+    else if (userRequest is "exit")
+        break;
+
+    sessionMessages.AddUserMessage(userRequest);
+}
