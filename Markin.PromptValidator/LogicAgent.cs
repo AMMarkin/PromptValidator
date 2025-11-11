@@ -1,10 +1,11 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Markin.PromptValidator;
 
-internal class LogicAgent(Kernel kernel)
+public class LogicAgent(Kernel kernel, ILogger<LogicAgent> logger)
 {
     private static readonly string systemPrompt = """
         Ты - эксперт по анализу качества промптов для AI-систем. Твоя задача - находить расплывчатые, неконкретные формулировки в промптах пользователей.
@@ -74,6 +75,7 @@ internal class LogicAgent(Kernel kernel)
 
     public async Task<string> AnalyzePrompt(string promptText)
     {
+        logger.LogInformation("Анализ промпта...");
         var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
 
         var chatHistory = new ChatHistory();

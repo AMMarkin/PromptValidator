@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -25,5 +26,21 @@ internal class DialogAgent(Kernel kernel, ILogger<DialogAgent> logger)
         var result = await chatCompletion.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
 
         return result.Content?.ToString() ?? "null";
+    }
+}
+
+public class DialogAgentPlugin
+{
+    [KernelFunction(nameof(AnalyzePrompt))]
+    [Description("Выполняет анализ текущей версии промптащ")]
+    [return: Description("Текст анализа промпта")]
+    public static async Task<string> AnalyzePrompt(
+        [FromKernelServices] LogicAgent logicAgent,
+        [FromKernelServices] SessionContext sessionContext)
+    {
+        var result = await logicAgent.AnalyzePrompt(sessionContext.ModifiedPrompt ?? sessionContext.OriginalPrompt);
+        sessionContext.ChatHistory.AddMessage(AuthorRole.Tool, result);
+
+        return result;        
     }
 }
