@@ -18,22 +18,24 @@ var inputPromptText = await File.ReadAllTextAsync(pathToPrompt);
 
 var userRequest = "Проанализируй промпт, найди все ошибки";
 
-var kernelBuilder = Kernel.CreateBuilder();
-kernelBuilder.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
-kernelBuilder.Services.AddLogging();
+var services = new ServiceCollection();
+services.AddKernel();
 
-kernelBuilder.Services.AddSingleton<LogicAgent>();
-kernelBuilder.Services.AddSingleton<DialogAgent>();
+services.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
+services.AddLogging();
 
-kernelBuilder.Services.AddSingleton(new SessionContext
+services.AddSingleton<LogicAgent>();
+services.AddSingleton<DialogAgent>();
+
+services.AddSingleton(new SessionContext
 {
     OriginalPrompt = inputPromptText
 });
 
-var kernel = kernelBuilder.Build();
+await using var servicesProvider = services.BuildServiceProvider();
 
-var dialogAgent = kernel.GetRequiredService<DialogAgent>();
-var sessionContext = kernel.GetRequiredService<SessionContext>();
+var dialogAgent = servicesProvider.GetRequiredService<DialogAgent>();
+var sessionContext = servicesProvider.GetRequiredService<SessionContext>();
 
 sessionContext.ChatHistory.AddUserMessage(userRequest);
 
