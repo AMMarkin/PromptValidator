@@ -3,8 +3,9 @@ using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
+var openAiProxyUrl = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__OPENAI_PROXY_URL", EnvironmentVariableTarget.User) ?? "https://api.openai.com/v1";
 
-if(string.IsNullOrWhiteSpace(openAiApiKey))
+if (string.IsNullOrWhiteSpace(openAiApiKey))
 {
     Console.WriteLine("Не найден API Key для OpenAI. Установите ключ в переменную среды PROMPT_VALIDATOR__API_KEY");
     return;
@@ -21,7 +22,7 @@ var userRequest = "Проанализируй промпт, найди все о
 var services = new ServiceCollection();
 services.AddKernel();
 
-services.AddOpenAIChatCompletion("gpt-5-mini", openAiApiKey);
+services.AddOpenAIChatCompletion("gpt-5-mini", new Uri(openAiProxyUrl), openAiApiKey);
 services.AddLogging();
 
 services.AddSingleton<LogicAgent>();
