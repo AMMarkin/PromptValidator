@@ -5,7 +5,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Markin.PromptValidator;
 
-public class LogicAgent(Kernel kernel, ILogger<LogicAgent> logger)
+public class PromptAnalyzer(Kernel kernel, ILogger<PromptAnalyzer> logger)
 {
     private static readonly string systemPrompt = """
         Ты - эксперт по анализу качества промптов для AI-систем. Твоя задача - находить расплывчатые, неконкретные формулировки в промптах пользователей.
