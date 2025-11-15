@@ -5,7 +5,10 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Markin.PromptValidator;
 
-public class PromptAnalyzer(Kernel kernel, ILogger<PromptAnalyzer> logger)
+public class PromptAnalyzer(
+    Kernel kernel,
+    SessionContext sessionContext,
+    ILogger<PromptAnalyzer> logger)
 {
     private static readonly string systemPrompt = """
         Ты - эксперт по анализу качества промптов для AI-систем. Твоя задача - находить расплывчатые, неконкретные формулировки в промптах пользователей.
@@ -73,15 +76,33 @@ public class PromptAnalyzer(Kernel kernel, ILogger<PromptAnalyzer> logger)
         ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("minimal")
     };
 
-    public async Task<string> AnalyzePrompt(SessionContext sessionContext)
+    public async Task AnalyzePrompt(string userRequest)
     {
         var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
 
-        var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage(systemPrompt);
-        chatHistory.AddRange(sessionContext.ChatHistory);
+        if (sessionContext.ChatHistory.Count == 0)
+        {
+            sessionContext.ChatHistory.AddSystemMessage(systemPrompt);
+            sessionContext.ChatHistory.AddUserMessage($"""
+            Промпт для анализа:
+            ```
+            {sessionContext.OriginalPrompt}
+            ```
+            """);
+        }
+        sessionContext.ChatHistory.AddUserMessage(userRequest);
 
-        var result = await chatCompletion.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
-        return result.Content?.ToString() ?? "null";
+        var resultStream = chatCompletion.GetStreamingChatMessageContentsAsync(sessionContext.ChatHistory, executionSettings, kernel);
+
+        var resultBuilder = new StringBuilder();
+        await foreach (var chunk in resultStream)
+        {
+            resultBuilder.Append(chunk);
+            Console.Write(chunk);
+        }
+
+        sessionContext.ChatHistory.AddAssistantMessage(resultBuilder.ToString());
+        Console.WriteLine();
     }
+
 }

@@ -35,23 +35,10 @@ services.AddSingleton(new SessionContext
 await using var servicesProvider = services.BuildServiceProvider();
 
 var promptAnalyzer = servicesProvider.GetRequiredService<PromptAnalyzer>();
-var sessionContext = servicesProvider.GetRequiredService<SessionContext>();
-
-sessionContext.ChatHistory.AddUserMessage($"""
-    Промпт для анализа:
-    ```
-    {sessionContext.ModifiedPrompt ?? sessionContext.OriginalPrompt}
-    ```
-    """);
-
-sessionContext.ChatHistory.AddUserMessage(userRequest);
 
 while (true)
 {
-    var response = await promptAnalyzer.AnalyzePrompt(sessionContext);
-    sessionContext.ChatHistory.AddAssistantMessage(response);
-
-    Console.WriteLine(response);
+    await promptAnalyzer.AnalyzePrompt(userRequest ?? "[пустое сообщение]");
 
     Console.Write("> ");
     userRequest = Console.ReadLine();
@@ -60,6 +47,4 @@ while (true)
         continue;
     else if (userRequest is "exit")
         break;
-
-    sessionContext.ChatHistory.AddUserMessage(userRequest);
 }
