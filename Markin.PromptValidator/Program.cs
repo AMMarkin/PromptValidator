@@ -26,7 +26,6 @@ services.AddOpenAIChatCompletion("gpt-5-mini", new Uri(openAiProxyUrl), openAiAp
 services.AddLogging();
 
 services.AddSingleton<LogicAgent>();
-services.AddSingleton<DialogAgent>();
 
 services.AddSingleton(new SessionContext
 {
@@ -35,14 +34,20 @@ services.AddSingleton(new SessionContext
 
 await using var servicesProvider = services.BuildServiceProvider();
 
-var dialogAgent = servicesProvider.GetRequiredService<DialogAgent>();
+var logicAgent = servicesProvider.GetRequiredService<LogicAgent>();
 var sessionContext = servicesProvider.GetRequiredService<SessionContext>();
 
+sessionContext.ChatHistory.AddUserMessage($"""
+    Промпт для анализа:
+    ```
+    {sessionContext.ModifiedPrompt ?? sessionContext.OriginalPrompt}
+    ```
+    """);
 sessionContext.ChatHistory.AddUserMessage(userRequest);
 
 while (true)
 {
-    var response = await dialogAgent.ProcessRequest(sessionContext.ChatHistory);
+    var response = await logicAgent.AnalyzePrompt(sessionContext);
     sessionContext.ChatHistory.AddAssistantMessage(response);
 
     Console.WriteLine(response);

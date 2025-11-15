@@ -70,22 +70,16 @@ public class LogicAgent(Kernel kernel, ILogger<LogicAgent> logger)
 
     private static readonly OpenAIPromptExecutionSettings executionSettings = new()
     {
-        ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("none")
+        ReasoningEffort = new OpenAI.Chat.ChatReasoningEffortLevel("minimal")
     };
 
-    public async Task<string> AnalyzePrompt(string promptText)
+    public async Task<string> AnalyzePrompt(SessionContext sessionContext)
     {
-        logger.LogInformation("Анализ промпта...");
         var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
 
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(systemPrompt);
-        chatHistory.AddUserMessage($"""
-        Промпт для анализа:
-        ```
-        {promptText}
-        ```
-        """);
+        chatHistory.AddRange(sessionContext.ChatHistory);
 
         var result = await chatCompletion.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
         return result.Content?.ToString() ?? "null";
