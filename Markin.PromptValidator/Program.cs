@@ -1,6 +1,7 @@
 ﻿using Markin.PromptValidator;
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var openAiApiKey = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__API_KEY", EnvironmentVariableTarget.User);
 var openAiProxyUrl = Environment.GetEnvironmentVariable("PROMPT_VALIDATOR__OPENAI_PROXY_URL", EnvironmentVariableTarget.User) ?? "https://api.openai.com/v1";
@@ -20,14 +21,14 @@ var inputPromptText = await File.ReadAllTextAsync(pathToPrompt);
 var userRequest = "Проанализируй промпт, найди все ошибки";
 
 var services = new ServiceCollection();
-services.AddKernel();
 
-services.AddOpenAIChatCompletion("gpt-5-mini", new Uri(openAiProxyUrl), openAiApiKey);
-services.AddLogging();
+var kernelBuilder = services.AddKernel();
+kernelBuilder.Services.AddLogging(configure => configure.AddConsole());
+kernelBuilder.Services.AddOpenAIChatCompletion("gpt-5-mini", new Uri(openAiProxyUrl), openAiApiKey);
 
-services.AddSingleton<PromptAnalyzer>();
+kernelBuilder.Services.AddSingleton<PromptAnalyzer>();
 
-services.AddSingleton(new SessionContext
+kernelBuilder.Services.AddSingleton(new SessionContext
 {
     OriginalPrompt = inputPromptText
 });
