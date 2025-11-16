@@ -18,7 +18,7 @@ var pathToPrompt = Path.Combine(promptsFolder, "Name Translator.txt");
 
 var inputPromptText = await File.ReadAllTextAsync(pathToPrompt);
 
-var userRequest = "Проанализируй промпт, найди все ошибки";
+var userRequest = "Сколько ошибок есть в промпте?";
 
 var services = new ServiceCollection();
 
@@ -32,6 +32,8 @@ kernelBuilder.Services.AddSingleton(new SessionContext
 {
     OriginalPrompt = inputPromptText
 });
+
+kernelBuilder.Plugins.AddFromType<TodoPlugin>();
 
 await using var servicesProvider = services.BuildServiceProvider();
 
